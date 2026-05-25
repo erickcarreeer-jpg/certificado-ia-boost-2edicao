@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readFileSync } from "fs"
 import { join } from "path"
-import { Resvg } from "@resvg/resvg-js"
+import sharp from "sharp"
 import { PDFDocument } from "pdf-lib"
 
 // Name coordinates (between title and body text, left-aligned)
@@ -77,11 +77,10 @@ export async function POST(req: NextRequest) {
   const svgContent = readFileSync(templatePath, "utf-8")
   const modifiedSvg = injectTextIntoSvg(svgContent, trimmedName)
 
-  const resvg = new Resvg(modifiedSvg, {
-    fitTo: { mode: "width", value: 1280 },
-  })
-  const pngData = resvg.render()
-  const pngBuffer = pngData.asPng()
+  const pngBuffer = await sharp(Buffer.from(modifiedSvg))
+    .resize({ width: 1280 })
+    .png()
+    .toBuffer()
 
   if (format === "png") {
     return new NextResponse(pngBuffer.buffer as ArrayBuffer, {
