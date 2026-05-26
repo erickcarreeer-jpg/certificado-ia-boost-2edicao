@@ -3,6 +3,8 @@ import { readFileSync } from "fs"
 import { join } from "path"
 import sharp from "sharp"
 import { PDFDocument } from "pdf-lib"
+import satori from "satori"
+import { createElement } from "react"
 
 const NAME_X = 290
 const NAME_Y = 275
@@ -12,6 +14,9 @@ const DATE_X = 290
 const DATE_Y = 630
 const DATE_FONT_SIZE = 22
 
+const CERT_WIDTH = 1280
+const CERT_HEIGHT = 904
+
 function formatDate(): string {
   return new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -20,64 +25,49 @@ function formatDate(): string {
   })
 }
 
-function loadFontAsBase64(): string {
+async function createTextOverlayPng(name: string, date: string): Promise<Buffer> {
   const fontPath = join(
     process.cwd(),
     "node_modules/@fontsource/playfair-display/files",
     "playfair-display-latin-600-normal.woff"
   )
-  return readFileSync(fontPath).toString("base64")
-}
+  const fontData = readFileSync(fontPath)
 
-function injectTextIntoSvg(svgContent: string, name: string): string {
-  const date = formatDate()
-  const fontBase64 = loadFontAsBase64()
+  const element = createElement(
+    "div",
+    { style: { width: `${CERT_WIDTH}px`, height: `${CERT_HEIGHT}px`, position: "relative", display: "flex" } },
+    createElement("span", {
+      style: {
+        position: "absolute",
+        left: `${NAME_X}px`,
+        top: `${NAME_Y - NAME_FONT_SIZE}px`,
+        fontSize: `${NAME_FONT_SIZE}px`,
+        fontWeight: 600,
+        fontFamily: "Playfair Display",
+        color: "#1a1a2e",
+        whiteSpace: "nowrap",
+      },
+    }, name),
+    createElement("span", {
+      style: {
+        position: "absolute",
+        left: `${DATE_X}px`,
+        top: `${DATE_Y - DATE_FONT_SIZE}px`,
+        fontSize: `${DATE_FONT_SIZE}px`,
+        fontFamily: "Playfair Display",
+        color: "#444444",
+        whiteSpace: "nowrap",
+      },
+    }, date)
+  )
 
-  const fontFace = `
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'PlayfairDisplay';
-        src: url('data:font/woff;base64,${fontBase64}') format('woff');
-        font-weight: 600;
-      }
-    </style>
-  </defs>`
+  const textSvg = await satori(element, {
+    width: CERT_WIDTH,
+    height: CERT_HEIGHT,
+    fonts: [{ name: "Playfair Display", data: fontData, weight: 600, style: "normal" }],
+  })
 
-  const nameElement = `
-  <text
-    x="${NAME_X}"
-    y="${NAME_Y}"
-    font-family="PlayfairDisplay, Georgia, serif"
-    font-size="${NAME_FONT_SIZE}"
-    font-weight="600"
-    fill="#1a1a2e"
-    text-anchor="start"
-  >${escapeXml(name)}</text>`
-
-  const dateElement = `
-  <text
-    x="${DATE_X}"
-    y="${DATE_Y}"
-    font-family="PlayfairDisplay, Georgia, serif"
-    font-size="${DATE_FONT_SIZE}"
-    fill="#444444"
-    text-anchor="start"
-  >${escapeXml(date)}</text>`
-
-  return svgContent
-    .replace("<svg", `<svg`)
-    .replace(/<defs>/, `${fontFace}<defs>`)
-    .replace("</svg>", `${nameElement}${dateElement}</svg>`)
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
+  return sharp(Buffer.from(textSvg)).png().toBuffer()
 }
 
 export async function POST(req: NextRequest) {
@@ -92,13 +82,20 @@ export async function POST(req: NextRequest) {
   }
 
   const trimmedName = name.trim().slice(0, 80)
+  const date = formatDate()
 
   const templatePath = join(process.cwd(), "public", "certificate-template.svg")
   const svgContent = readFileSync(templatePath, "utf-8")
-  const modifiedSvg = injectTextIntoSvg(svgContent, trimmedName)
 
-  const pngBuffer = await sharp(Buffer.from(modifiedSvg))
-    .resize({ width: 1280 })
+  const basePng = await sharp(Buffer.from(svgContent))
+    .resize({ width: CERT_WIDTH })
+    .png()
+    .toBuffer()
+
+  const textPng = await createTextOverlayPng(trimmedName, date)
+
+  const pngBuffer = await sharp(basePng)
+    .composite([{ input: textPng, blend: "over" }])
     .png()
     .toBuffer()
 
@@ -112,7 +109,6 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // PDF
   const pdfDoc = await PDFDocument.create()
   const pngImage = await pdfDoc.embedPng(pngBuffer)
   const { width, height } = pngImage.scale(1)
