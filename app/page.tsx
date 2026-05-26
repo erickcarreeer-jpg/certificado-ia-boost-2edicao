@@ -14,6 +14,7 @@ type Result = {
   total: number
   score: number
   passed: boolean
+  token?: string
 }
 
 export default function Home() {
@@ -360,7 +361,7 @@ export default function Home() {
           )}
 
           {stage === "passed" && result && (
-            <CertificateDownload onRetry={retry} />
+            <CertificateDownload token={result.token} onRetry={retry} />
           )}
 
           {stage === "failed" && result && (

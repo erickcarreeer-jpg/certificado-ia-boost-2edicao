@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react"
 
 type Props = {
+  token?: string
   onRetry: () => void
 }
 
-export default function CertificateDownload({ onRetry }: Props) {
+export default function CertificateDownload({ token, onRetry }: Props) {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState<"png" | "pdf" | null>(null)
   const [error, setError] = useState("")
@@ -29,7 +30,7 @@ export default function CertificateDownload({ onRetry }: Props) {
       const res = await fetch("/api/generate-certificate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), format }),
+        body: JSON.stringify({ name: name.trim(), format, token }),
       })
 
       if (!res.ok) throw new Error()

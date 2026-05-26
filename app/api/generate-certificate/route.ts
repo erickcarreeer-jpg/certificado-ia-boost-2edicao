@@ -5,7 +5,9 @@ import sharp from "sharp"
 import { PDFDocument } from "pdf-lib"
 import satori from "satori"
 import { createElement } from "react"
+import { createHmac, timingSafeEqual } from "crypto"
 
+// ── Certificate layout constants ────────────────────────────────────────────
 const NAME_X = 290
 const NAME_Y = 275
 const NAME_FONT_SIZE = 38
@@ -17,6 +19,42 @@ const DATE_FONT_SIZE = 22
 const CERT_WIDTH = 1280
 const CERT_HEIGHT = 904
 
+// ── Token verification ───────────────────────────────────────────────────────
+const TOKEN_TTL_MS = 30 * 60 * 1000 // 30 minutes
+
+function verifyToken(token: string, secret: string): boolean {
+  const parts = token.split(".")
+  if (parts.length !== 2) return false
+
+  const [timestamp, hmac] = parts
+  const ts = parseInt(timestamp, 10)
+  if (!Number.isFinite(ts)) return false
+
+  // Reject expired tokens
+  if (Date.now() - ts > TOKEN_TTL_MS) return false
+
+  const payload = `pass:${timestamp}`
+  const expected = createHmac("sha256", secret).update(payload).digest("hex")
+
+  // Constant-time comparison to prevent timing attacks
+  try {
+    return timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(expected, "hex"))
+  } catch {
+    return false
+  }
+}
+
+// ── Input sanitization ──────────────────────────────────────────────────────
+// Allow Unicode letters/marks, spaces, hyphens, apostrophes, dots — strip everything else
+function sanitizeName(raw: string): string {
+  return raw
+    .trim()
+    .replace(/[^\p{L}\p{M}\s\-'.]/gu, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 80)
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function formatDate(): string {
   return new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -70,10 +108,38 @@ async function createTextOverlayPng(name: string, date: string): Promise<Buffer>
   return sharp(Buffer.from(textSvg)).png().toBuffer()
 }
 
+// ── Route handler ────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  const { name, format } = await req.json()
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Requisição inválida" }, { status: 400 })
+  }
 
-  if (!name || typeof name !== "string" || name.trim().length < 2) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Requisição inválida" }, { status: 400 })
+  }
+
+  const { name, format, token } = body as { name?: unknown; format?: unknown; token?: unknown }
+
+  // ── Token verification ─────────────────────────────────────────────────────
+  const secret = process.env.CERT_SECRET
+  if (secret) {
+    if (
+      !token ||
+      typeof token !== "string" ||
+      !verifyToken(token, secret)
+    ) {
+      return NextResponse.json(
+        { error: "Não autorizado. Complete a prova para emitir o certificado." },
+        { status: 403 }
+      )
+    }
+  }
+
+  // ── Input validation ───────────────────────────────────────────────────────
+  if (!name || typeof name !== "string") {
     return NextResponse.json({ error: "Nome inválido" }, { status: 400 })
   }
 
@@ -81,9 +147,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Formato inválido" }, { status: 400 })
   }
 
-  const trimmedName = name.trim().slice(0, 80)
+  const trimmedName = sanitizeName(name)
+  if (trimmedName.length < 2) {
+    return NextResponse.json({ error: "Nome inválido" }, { status: 400 })
+  }
+
   const date = formatDate()
 
+  // ── Certificate generation ─────────────────────────────────────────────────
   const templatePath = join(process.cwd(), "public", "certificate-template.svg")
   const svgContent = readFileSync(templatePath, "utf-8")
 
@@ -109,6 +180,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  // PDF
   const pdfDoc = await PDFDocument.create()
   const pngImage = await pdfDoc.embedPng(pngBuffer)
   const { width, height } = pngImage.scale(1)
