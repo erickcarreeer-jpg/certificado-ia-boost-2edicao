@@ -6,6 +6,7 @@ import { PDFDocument } from "pdf-lib"
 import satori from "satori"
 import { createElement } from "react"
 import { createHmac, timingSafeEqual } from "crypto"
+import { sql } from "@/lib/db"
 
 // ── Certificate layout constants ────────────────────────────────────────────
 const NAME_X = 290
@@ -121,11 +122,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Requisição inválida" }, { status: 400 })
   }
 
-  const { name, format, token } = body as { name?: unknown; format?: unknown; token?: unknown }
+  const { name, format, token, email } = body as {
+    name?: unknown
+    format?: unknown
+    token?: unknown
+    email?: unknown
+  }
 
-  // ── Token verification ─────────────────────────────────────────────────────
+  // ── Authorization: token (fresh pass) OR email with passed=true in DB ──────
   const secret = process.env.CERT_SECRET
-  if (secret) {
+  let authorizedByDb = false
+
+  if (email && typeof email === "string") {
+    const normalizedEmail = email.trim().toLowerCase()
+    const rows = await sql`
+      SELECT passed FROM quiz_results WHERE email = ${normalizedEmail} AND passed = true
+    `
+    if (rows.length > 0) authorizedByDb = true
+  }
+
+  if (!authorizedByDb && secret) {
     if (
       !token ||
       typeof token !== "string" ||
@@ -150,6 +166,14 @@ export async function POST(req: NextRequest) {
   const trimmedName = sanitizeName(name)
   if (trimmedName.length < 2) {
     return NextResponse.json({ error: "Nome inválido" }, { status: 400 })
+  }
+
+  // If authorized via DB (reissue), update the stored name
+  if (authorizedByDb && email && typeof email === "string") {
+    const normalizedEmail = email.trim().toLowerCase()
+    await sql`
+      UPDATE quiz_results SET name = ${trimmedName} WHERE email = ${normalizedEmail}
+    `
   }
 
   const date = formatDate()
