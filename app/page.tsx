@@ -188,8 +188,8 @@ export default function Home() {
                 <Image
                   src="/hero-preview.png"
                   alt="Design System — IA Boost Workshop"
-                  width={1920}
-                  height={1080}
+                  width={1420}
+                  height={954}
                   className="w-full"
                   quality={85}
                 />
