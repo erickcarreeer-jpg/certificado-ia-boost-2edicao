@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { questions, shuffleQuestions, Question } from "@/data/questions"
 import Quiz from "@/components/Quiz"
 import CertificateDownload from "@/components/CertificateDownload"
@@ -20,11 +20,25 @@ export default function Home() {
   const [stage, setStage] = useState<Stage>("intro")
   const [shuffled, setShuffled] = useState<Question[]>([])
   const [result, setResult] = useState<Result | null>(null)
+  const mainContentRef = useRef<HTMLDivElement>(null)
+
+  // WCAG 2.4.3 — Scroll respeitando prefers-reduced-motion
+  function scrollToTop() {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' })
+  }
+
+  // WCAG 2.4.3 — Move foco para o conteúdo ao trocar de stage
+  useEffect(() => {
+    if (stage !== 'intro') {
+      mainContentRef.current?.focus()
+    }
+  }, [stage])
 
   function startQuiz() {
     setShuffled(shuffleQuestions(questions))
     setStage("quiz")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    scrollToTop()
   }
 
   const handleComplete = useCallback(async (answers: Record<number, string>) => {
@@ -47,14 +61,18 @@ export default function Home() {
     setResult(null)
     setShuffled(shuffleQuestions(questions))
     setStage("intro")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    scrollToTop()
   }
 
   return (
-    <main className="min-h-screen text-white" style={{ backgroundColor: 'var(--ds-bg)' }}>
-
+    <main
+      id="conteudo-principal"
+      className="min-h-screen text-white"
+      style={{ backgroundColor: 'var(--ds-bg)' }}
+    >
       {/* ─── HEADER ─────────────────────────────────────────────── */}
       <header
+        role="banner"
         className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
         style={{
           borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -63,26 +81,33 @@ export default function Home() {
         }}
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between">
+          {/* WCAG 4.1.2 — Logo com aria-label descritivo */}
           <button
             onClick={retry}
+            aria-label="IA Boost — voltar para a página inicial"
             className="flex items-center gap-3 cursor-pointer"
             style={{ background: 'none', border: 'none', padding: 0 }}
           >
-            <Image src="/logo-ia-boost.svg" alt="IA Boost" width={110} height={19} priority unoptimized />
+            <Image src="/logo-ia-boost.svg" alt="" width={110} height={19} priority unoptimized aria-hidden="true" />
             <span
+              aria-hidden="true"
               className="hidden sm:block text-xs"
-              style={{ color: 'rgba(255,255,255,0.2)', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}
+              style={{ color: 'rgba(255,255,255,0.25)', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}
             >
               Workshop 2ª Edição
             </span>
           </button>
           {/* Identidades + CTA */}
           <div className="flex items-center gap-3">
-            {/* Evento por + avatars */}
-            <div className="hidden sm:flex items-center gap-2.5">
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Evento por</span>
-              <div className="flex items-center">
-                {[1, 2, 3].map((n, i) => (
+            {/* Evento por + avatars — WCAG 1.1.1: nomes reais dos instrutores */}
+            <div className="hidden sm:flex items-center gap-2.5" aria-label="Evento por Gilberto Prado, Leandro Rezende e Rafael Coronel">
+              <span className="text-xs" aria-hidden="true" style={{ color: 'rgba(255,255,255,0.45)' }}>Evento por</span>
+              <div className="flex items-center" aria-hidden="true">
+                {[
+                  { n: 1, nome: 'Gilberto Prado' },
+                  { n: 2, nome: 'Leandro Rezende' },
+                  { n: 3, nome: 'Rafael Coronel' },
+                ].map(({ n, nome }, i) => (
                   <div
                     key={n}
                     className="w-8 h-8 rounded-full overflow-hidden"
@@ -95,7 +120,7 @@ export default function Home() {
                   >
                     <Image
                       src={`/avatar-${n}.jpg`}
-                      alt={`Instrutor ${n}`}
+                      alt={nome}
                       width={32}
                       height={32}
                       className="w-full h-full object-cover"
@@ -316,18 +341,21 @@ export default function Home() {
 
       {/* ─── QUIZ / RESULT STAGES ────────────────────────────────── */}
       {stage !== "intro" && (
-        <div className="max-w-3xl mx-auto px-6 pt-28 pb-16">
+        /* WCAG 2.4.3 — tabIndex=-1 permite receber foco via useEffect ao trocar de stage */
+        <div ref={mainContentRef} tabIndex={-1} className="max-w-3xl mx-auto px-6 pt-28 pb-16 outline-none">
           {stage === "quiz" && (
             <Quiz questions={shuffled} onComplete={handleComplete} />
           )}
 
           {stage === "checking" && (
-            <div className="text-center py-24">
+            /* WCAG 4.1.3 — role=status anuncia o carregamento */
+            <div className="text-center py-24" role="status" aria-label="Verificando suas respostas, aguarde">
               <div
+                aria-hidden="true"
                 className="inline-block w-10 h-10 border-2 border-t-transparent rounded-full animate-spin mb-6"
                 style={{ borderColor: 'var(--ds-purple)', borderTopColor: 'transparent' }}
               />
-              <p style={{ color: 'var(--ds-text-muted)' }}>Verificando suas respostas...</p>
+              <p style={{ color: 'var(--ds-text-muted)' }}>Verificando suas respostas…</p>
             </div>
           )}
 
