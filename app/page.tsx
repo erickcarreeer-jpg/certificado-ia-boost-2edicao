@@ -171,23 +171,34 @@ export default function Home() {
               </span>
             </button>
 
-            {/* Certificate preview */}
-            <div
-              className="mt-20 rounded-2xl overflow-hidden opacity-40 hover:opacity-70 transition-opacity"
-              style={{ border: '1px solid var(--ds-border)' }}
-            >
-              <Image
-                src="/certificate-template.svg"
-                alt="Preview do certificado"
-                width={800}
-                height={565}
-                className="w-full"
-                unoptimized
+            {/* Hero preview — Design System Showcase */}
+            <div className="mt-20 relative">
+              {/* Glow top */}
+              <div
+                className="absolute -top-px left-1/2 -translate-x-1/2 w-3/4 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(114,26,231,0.6), transparent)' }}
               />
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  boxShadow: '0 0 80px rgba(114,26,231,0.12), 0 40px 80px rgba(0,0,0,0.4)',
+                }}
+              >
+                <Image
+                  src="/hero-preview.png"
+                  alt="Design System — IA Boost Workshop"
+                  width={1920}
+                  height={1080}
+                  className="w-full"
+                  quality={85}
+                />
+              </div>
+              {/* Caption */}
+              <p className="text-xs mt-4 uppercase tracking-widest text-center" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                Workshop IA Boost · 2ª Edição
+              </p>
             </div>
-            <p className="text-xs mt-3 uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
-              Preview do certificado
-            </p>
           </div>
         )}
 
