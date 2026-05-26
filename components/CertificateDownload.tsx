@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from "react"
 
 type Props = {
   token?: string
+  initialName?: string
+  email?: string
   onRetry: () => void
 }
 
-export default function CertificateDownload({ token, onRetry }: Props) {
-  const [name, setName] = useState("")
+export default function CertificateDownload({ token, initialName = "", email, onRetry }: Props) {
+  const [name, setName] = useState(initialName)
   const [loading, setLoading] = useState<"png" | "pdf" | null>(null)
   const [error, setError] = useState("")
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -30,10 +32,13 @@ export default function CertificateDownload({ token, onRetry }: Props) {
       const res = await fetch("/api/generate-certificate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), format, token }),
+        body: JSON.stringify({ name: name.trim(), format, token, email }),
       })
 
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? "Erro ao gerar o certificado.")
+      }
 
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
@@ -42,8 +47,8 @@ export default function CertificateDownload({ token, onRetry }: Props) {
       a.download = `certificado-ia-boost.${format}`
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      setError("Não foi possível gerar o certificado. Tente novamente.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível gerar o certificado. Tente novamente.")
     } finally {
       setLoading(null)
     }

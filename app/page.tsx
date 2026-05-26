@@ -424,7 +424,12 @@ export default function Home() {
           )}
 
           {stage === "passed" && result && (
-            <CertificateDownload token={result.token} onRetry={retry} />
+            <CertificateDownload
+              token={result.token}
+              initialName={studentName}
+              email={studentEmail}
+              onRetry={retry}
+            />
           )}
 
           {stage === "failed" && result && (
