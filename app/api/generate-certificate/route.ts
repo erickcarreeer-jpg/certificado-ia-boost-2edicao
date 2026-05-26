@@ -4,12 +4,10 @@ import { join } from "path"
 import sharp from "sharp"
 import { PDFDocument } from "pdf-lib"
 
-// Name coordinates (between title and body text, left-aligned)
 const NAME_X = 290
 const NAME_Y = 275
 const NAME_FONT_SIZE = 38
 
-// Date coordinates (below "Conclusão" label)
 const DATE_X = 290
 const DATE_Y = 630
 const DATE_FONT_SIZE = 22
@@ -22,33 +20,55 @@ function formatDate(): string {
   })
 }
 
+function loadFontAsBase64(): string {
+  const fontPath = join(
+    process.cwd(),
+    "node_modules/@fontsource/playfair-display/files",
+    "playfair-display-latin-600-normal.woff"
+  )
+  return readFileSync(fontPath).toString("base64")
+}
+
 function injectTextIntoSvg(svgContent: string, name: string): string {
   const date = formatDate()
+  const fontBase64 = loadFontAsBase64()
+
+  const fontFace = `
+  <defs>
+    <style>
+      @font-face {
+        font-family: 'PlayfairDisplay';
+        src: url('data:font/woff;base64,${fontBase64}') format('woff');
+        font-weight: 600;
+      }
+    </style>
+  </defs>`
 
   const nameElement = `
   <text
     x="${NAME_X}"
     y="${NAME_Y}"
-    font-family="Georgia, 'Times New Roman', serif"
+    font-family="PlayfairDisplay, Georgia, serif"
     font-size="${NAME_FONT_SIZE}"
     font-weight="600"
     fill="#1a1a2e"
     text-anchor="start"
-    dominant-baseline="auto"
   >${escapeXml(name)}</text>`
 
   const dateElement = `
   <text
     x="${DATE_X}"
     y="${DATE_Y}"
-    font-family="Georgia, 'Times New Roman', serif"
+    font-family="PlayfairDisplay, Georgia, serif"
     font-size="${DATE_FONT_SIZE}"
     fill="#444444"
     text-anchor="start"
-    dominant-baseline="auto"
   >${escapeXml(date)}</text>`
 
-  return svgContent.replace("</svg>", `${nameElement}${dateElement}</svg>`)
+  return svgContent
+    .replace("<svg", `<svg`)
+    .replace(/<defs>/, `${fontFace}<defs>`)
+    .replace("</svg>", `${nameElement}${dateElement}</svg>`)
 }
 
 function escapeXml(str: string): string {
