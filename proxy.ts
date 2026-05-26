@@ -29,9 +29,9 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = getIp(request)
 
-  // /api/generate-certificate — stricter: 5 requests per minute per IP
-  if (pathname === "/api/generate-certificate") {
-    if (isRateLimited(`cert:${ip}`, 5, 60_000)) {
+  // /api/verify-student — 10 requests per minute per IP (prevents email enumeration)
+  if (pathname === "/api/verify-student") {
+    if (isRateLimited(`verify:${ip}`, 10, 60_000)) {
       return NextResponse.json(
         { error: "Muitas tentativas. Aguarde um minuto e tente novamente." },
         { status: 429 }
@@ -49,9 +49,19 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // /api/generate-certificate — stricter: 5 requests per minute per IP
+  if (pathname === "/api/generate-certificate") {
+    if (isRateLimited(`cert:${ip}`, 5, 60_000)) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Aguarde um minuto e tente novamente." },
+        { status: 429 }
+      )
+    }
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/api/check-answers", "/api/generate-certificate"],
+  matcher: ["/api/verify-student", "/api/check-answers", "/api/generate-certificate"],
 }

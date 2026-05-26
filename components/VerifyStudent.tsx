@@ -9,7 +9,6 @@ type VerifyResult =
       eligible: true
       alreadyPassed: true
       result: {
-        email: string
         name: string
         score: number
         correct: number
@@ -82,9 +81,10 @@ export default function VerifyStudent({ onVerified, onAlreadyPassed }: Props) {
 
       if (data.alreadyPassed) {
         setPopup("success")
-        // Brief pause so the user sees the success popup, then navigate
+        // Use email from the local form state — never from the API response
+        const localEmail = email.trim().toLowerCase()
         setTimeout(() => {
-          onAlreadyPassed(data.result)
+          onAlreadyPassed({ ...data.result, email: localEmail })
         }, 1800)
         return
       }

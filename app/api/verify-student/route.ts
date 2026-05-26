@@ -41,11 +41,12 @@ export async function POST(req: NextRequest) {
   `
 
   if (existing.length > 0 && existing[0].passed) {
+    // Note: we do NOT echo the email back — the client already has it from the form.
+    // Returning it would make enumeration marginally easier and is not needed.
     return NextResponse.json({
       eligible: true,
       alreadyPassed: true,
       result: {
-        email: existing[0].email,
         name: existing[0].name,
         score: existing[0].score,
         correct: existing[0].correct,
