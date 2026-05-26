@@ -76,15 +76,49 @@ export default function Home() {
               Workshop 2ª Edição
             </span>
           </button>
-          <button
-            onClick={startQuiz}
-            className="text-xs font-semibold px-4 py-2 rounded-full transition-all"
-            style={{ border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.65)', background: 'transparent' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.45)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.18)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.65)' }}
-          >
-            Iniciar prova →
-          </button>
+          {/* Identidades + CTA */}
+          <div className="flex items-center gap-3">
+            {/* Evento por + avatars */}
+            <div className="hidden sm:flex items-center gap-2.5">
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Evento por</span>
+              <div className="flex items-center">
+                {[1, 2, 3].map((n, i) => (
+                  <div
+                    key={n}
+                    className="w-8 h-8 rounded-full overflow-hidden"
+                    style={{
+                      marginLeft: i === 0 ? 0 : '-8px',
+                      border: '2px solid rgba(13,13,14,0.9)',
+                      zIndex: 3 - i,
+                      position: 'relative',
+                    }}
+                  >
+                    <Image
+                      src={`/avatar-${n}.jpg`}
+                      alt={`Instrutor ${n}`}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Separador */}
+            <div className="hidden sm:block w-px h-4" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+
+            {/* Botão CTA */}
+            <button
+              onClick={startQuiz}
+              className="text-xs font-semibold px-4 py-2 rounded-full transition-all"
+              style={{ border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.65)', background: 'transparent' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.45)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.18)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.65)' }}
+            >
+              Iniciar prova →
+            </button>
+          </div>
         </div>
       </header>
 
