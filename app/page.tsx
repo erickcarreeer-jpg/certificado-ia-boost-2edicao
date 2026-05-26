@@ -63,7 +63,11 @@ export default function Home() {
         }}
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button
+            onClick={retry}
+            className="flex items-center gap-3 cursor-pointer"
+            style={{ background: 'none', border: 'none', padding: 0 }}
+          >
             <Image src="/logo-ia-boost.svg" alt="IA Boost" width={110} height={19} priority unoptimized />
             <span
               className="hidden sm:block text-xs"
@@ -71,7 +75,7 @@ export default function Home() {
             >
               Workshop 2ª Edição
             </span>
-          </div>
+          </button>
           <button
             onClick={startQuiz}
             className="text-xs font-semibold px-4 py-2 rounded-full transition-all"
