@@ -26,7 +26,7 @@ export default function CertificateDownload({ onRetry }: Props) {
         body: JSON.stringify({ name: name.trim(), format }),
       })
 
-      if (!res.ok) throw new Error("Erro ao gerar o certificado")
+      if (!res.ok) throw new Error()
 
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
@@ -43,20 +43,46 @@ export default function CertificateDownload({ onRetry }: Props) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto text-center">
-      {/* Success banner */}
-      <div className="mb-8 inline-flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-4">
-        <span className="text-3xl">🎉</span>
-        <div className="text-left">
-          <p className="text-green-400 font-semibold text-lg">Parabéns! Você foi aprovado.</p>
-          <p className="text-gray-400 text-sm">Agora é só colocar seu nome e baixar seu certificado.</p>
+    <div className="w-full max-w-xl mx-auto">
+      {/* Success state */}
+      <div className="text-center mb-10">
+        {/* Icon */}
+        <div
+          className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5"
+          style={{ backgroundColor: 'rgba(114,26,231,0.15)', border: '1px solid rgba(114,26,231,0.3)' }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M5 13l4 4L19 7" stroke="#721AE7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
+
+        <p
+          className="text-xs font-bold tracking-[0.2em] uppercase mb-2"
+          style={{ color: 'var(--ds-purple)' }}
+        >
+          Aprovado
+        </p>
+        <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+          Parabéns!
+        </h2>
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          Coloque seu nome exatamente como quer que apareça no certificado.
+        </p>
       </div>
 
-      {/* Name input */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-8 mb-6">
-        <label className="block text-gray-300 text-sm font-medium mb-3 text-left">
-          Seu nome completo (como aparecerá no certificado)
+      {/* Card */}
+      <div
+        className="rounded-2xl p-6 mb-5"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <label
+          className="block text-xs font-semibold uppercase tracking-wider mb-3"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+        >
+          Seu nome completo
         </label>
         <input
           type="text"
@@ -64,49 +90,104 @@ export default function CertificateDownload({ onRetry }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Ex: Maria Silva Santos"
           maxLength={80}
-          className="w-full bg-white/10 border border-white/20 rounded-xl px-5 py-4 text-white text-lg placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors mb-2"
+          className="w-full rounded-xl px-4 py-3.5 text-white text-base placeholder-transparent transition-all outline-none"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            border: error
+              ? '1px solid rgba(255,94,64,0.6)'
+              : '1px solid rgba(255,255,255,0.1)',
+            caretColor: 'var(--ds-purple)',
+          }}
+          onFocus={e => {
+            if (!error) e.currentTarget.style.borderColor = 'rgba(114,26,231,0.6)'
+          }}
+          onBlur={e => {
+            if (!error) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+          }}
         />
         {name.trim().length > 0 && (
-          <p className="text-gray-500 text-xs text-right">{name.trim().length}/80 caracteres</p>
+          <p className="text-right text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            {name.trim().length}/80
+          </p>
         )}
-        {error && <p className="text-red-400 text-sm mt-2 text-left">{error}</p>}
+        {error && (
+          <p className="text-xs mt-2" style={{ color: 'rgba(255,94,64,0.9)' }}>{error}</p>
+        )}
       </div>
 
       {/* Download buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+        {/* Primary — PNG */}
         <button
           onClick={() => download("png")}
           disabled={!!loading}
-          className="flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
+          className="flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-full font-bold text-sm transition-all disabled:opacity-40"
+          style={{
+            backgroundColor: '#fff',
+            color: '#0D0D0E',
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.15), 0 8px 32px rgba(114,26,231,0.2)',
+          }}
         >
           {loading === "png" ? (
-            <span className="animate-spin">⏳</span>
+            <span
+              className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: '#0D0D0E', borderTopColor: 'transparent' }}
+            />
           ) : (
-            <span>🖼️</span>
+            <span
+              className="flex items-center justify-center w-5 h-5 rounded-full text-white text-xs"
+              style={{ backgroundColor: 'var(--ds-purple)' }}
+            >
+              ↓
+            </span>
           )}
-          Baixar como PNG
+          Baixar PNG
         </button>
 
+        {/* Secondary — PDF */}
         <button
           onClick={() => download("pdf")}
           disabled={!!loading}
-          className="flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 disabled:opacity-50 transition-all"
+          className="flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-full font-semibold text-sm transition-all disabled:opacity-40"
+          style={{
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: 'rgba(255,255,255,0.7)',
+            background: 'transparent',
+          }}
+          onMouseEnter={e => {
+            if (!loading) {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.3)'
+              ;(e.currentTarget as HTMLButtonElement).style.color = '#fff'
+            }
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'
+            ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)'
+          }}
         >
           {loading === "pdf" ? (
-            <span className="animate-spin">⏳</span>
+            <span
+              className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'rgba(255,255,255,0.5)', borderTopColor: 'transparent' }}
+            />
           ) : (
-            <span>📄</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>↓</span>
           )}
-          Baixar como PDF
+          Baixar PDF
         </button>
       </div>
 
-      <button
-        onClick={onRetry}
-        className="text-gray-500 text-sm hover:text-gray-400 transition-colors underline underline-offset-4"
-      >
-        Refazer a prova
-      </button>
+      <div className="text-center">
+        <button
+          onClick={onRetry}
+          className="text-xs transition-colors"
+          style={{ color: 'rgba(255,255,255,0.2)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.2)')}
+        >
+          Refazer a prova
+        </button>
+      </div>
     </div>
   )
 }

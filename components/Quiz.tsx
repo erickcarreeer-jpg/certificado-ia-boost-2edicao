@@ -15,6 +15,7 @@ export default function Quiz({ questions, onComplete }: Props) {
   const q = questions[current]
   const selected = answers[q.id]
   const isLast = current === questions.length - 1
+  const progress = ((current + 1) / questions.length) * 100
 
   function select(key: string) {
     setAnswers((prev) => ({ ...prev, [q.id]: key }))
@@ -36,48 +37,77 @@ export default function Quiz({ questions, onComplete }: Props) {
   return (
     <div className="w-full max-w-2xl mx-auto">
       {/* Progress */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-400 mb-2">
+      <div className="mb-8">
+        <div className="flex justify-between text-xs mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
           <span>Questão {current + 1} de {questions.length}</span>
-          <span>{Math.round(((current + 1) / questions.length) * 100)}%</span>
+          <span style={{ color: 'rgba(255,255,255,0.55)' }}>{Math.round(progress)}%</span>
         </div>
-        <div className="w-full bg-white/10 rounded-full h-1.5">
+        <div
+          className="w-full h-px relative overflow-hidden"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+        >
           <div
-            className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${((current + 1) / questions.length) * 100}%` }}
+            className="absolute left-0 top-0 h-full transition-all duration-500"
+            style={{ width: `${progress}%`, backgroundColor: 'var(--ds-purple)' }}
           />
         </div>
       </div>
 
       {/* Question card */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-8 mb-6">
-        <p className="text-white text-lg leading-relaxed font-medium mb-8">
+      <div
+        className="rounded-2xl p-8 mb-5"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <p className="text-white text-lg leading-relaxed font-semibold mb-7">
           {q.text}
         </p>
 
-        <div className="space-y-3">
-          {q.options.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => select(opt.key)}
-              className={`w-full text-left flex items-start gap-4 p-4 rounded-xl border transition-all duration-200 ${
-                selected === opt.key
-                  ? "border-purple-500 bg-purple-500/20 text-white"
-                  : "border-white/10 bg-white/5 text-gray-300 hover:border-white/30 hover:bg-white/10"
-              }`}
-            >
-              <span
-                className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  selected === opt.key
-                    ? "bg-purple-500 text-white"
-                    : "bg-white/10 text-gray-400"
-                }`}
+        <div className="flex flex-col gap-2.5">
+          {q.options.map((opt) => {
+            const isSelected = selected === opt.key
+            return (
+              <button
+                key={opt.key}
+                onClick={() => select(opt.key)}
+                className="w-full text-left flex items-start gap-4 p-4 rounded-xl transition-all duration-150"
+                style={{
+                  border: isSelected
+                    ? '1px solid var(--ds-purple)'
+                    : '1px solid rgba(255,255,255,0.07)',
+                  backgroundColor: isSelected
+                    ? 'rgba(114,26,231,0.12)'
+                    : 'rgba(255,255,255,0.02)',
+                  color: isSelected ? '#fff' : 'rgba(255,255,255,0.6)',
+                }}
+                onMouseEnter={e => {
+                  if (!isSelected) {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.18)'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.85)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'
+                  }
+                }}
               >
-                {opt.key}
-              </span>
-              <span className="pt-0.5 leading-snug">{opt.text}</span>
-            </button>
-          ))}
+                <span
+                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                  style={{
+                    backgroundColor: isSelected ? 'var(--ds-purple)' : 'rgba(255,255,255,0.07)',
+                    color: isSelected ? '#fff' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  {opt.key}
+                </span>
+                <span className="pt-0.5 leading-snug text-sm">{opt.text}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -86,21 +116,44 @@ export default function Quiz({ questions, onComplete }: Props) {
         {current > 0 && (
           <button
             onClick={prev}
-            className="px-6 py-3 rounded-xl border border-white/20 text-gray-300 hover:bg-white/10 transition-colors"
+            className="px-6 py-3 rounded-full text-sm font-medium transition-all"
+            style={{
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.5)',
+              background: 'transparent',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.3)'
+              ;(e.currentTarget as HTMLButtonElement).style.color = '#fff'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'
+              ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)'
+            }}
           >
-            Voltar
+            ← Voltar
           </button>
         )}
         <button
           onClick={next}
           disabled={!selected}
-          className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+          className="flex-1 py-3 rounded-full font-bold text-sm transition-all"
+          style={
             selected
-              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 cursor-pointer"
-              : "bg-white/10 text-gray-500 cursor-not-allowed"
-          }`}
+              ? {
+                  backgroundColor: '#fff',
+                  color: '#0D0D0E',
+                  boxShadow: '0 0 0 1px rgba(255,255,255,0.15), 0 8px 32px rgba(114,26,231,0.2)',
+                  cursor: 'pointer',
+                }
+              : {
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  color: 'rgba(255,255,255,0.2)',
+                  cursor: 'not-allowed',
+                }
+          }
         >
-          {isLast ? "Enviar respostas" : "Próxima questão"}
+          {isLast ? 'Enviar respostas' : 'Próxima questão'}
         </button>
       </div>
     </div>
