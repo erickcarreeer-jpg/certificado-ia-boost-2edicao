@@ -235,19 +235,19 @@ export default function Home() {
                     num: '01',
                     icon: '📝',
                     title: 'Responda a prova',
-                    desc: '10 questões sobre o conteúdo do Workshop IA Boost 2ª Edição, em ordem aleatória.',
+                    desc: '10 questões sobre o conteúdo do Workshop IA Boost 2ª Edição.',
                   },
                   {
                     num: '02',
                     icon: '🎯',
                     title: 'Acerte 70%',
-                    desc: 'Você precisa acertar pelo menos 7 das 10 questões para liberar o certificado.',
+                    desc: 'Você precisa acertar pelo menos 7 das 10 questões para conseguir seu certificado!',
                   },
                   {
                     num: '03',
                     icon: '🏆',
                     title: 'Emita o certificado',
-                    desc: 'Baixe na hora em PNG ou PDF com seu nome. Sem cadastro, sem banco de dados.',
+                    desc: 'Após a aprovação seu certificado sai na hora!',
                   },
                 ].map((step, i) => (
                   <div
@@ -269,67 +269,6 @@ export default function Home() {
                     </p>
                   </div>
                 ))}
-              </div>
-            </div>
-          </section>
-
-          {/* CERTIFICATE PREVIEW ────────────────────────────────── */}
-          <section style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="max-w-6xl mx-auto px-6 py-20">
-              <div className="flex flex-col sm:flex-row items-center gap-12">
-                {/* Text */}
-                <div className="flex-1 text-left">
-                  <p className="text-xs font-bold tracking-[0.2em] uppercase mb-4" style={{ color: 'var(--ds-purple)' }}>
-                    Certificado oficial
-                  </p>
-                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-5">
-                    Seu nome no<br />certificado.
-                  </h2>
-                  <p className="text-sm leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                    O certificado é gerado na hora com seu nome e data de conclusão. Disponível em <strong className="text-white">PNG</strong> e <strong className="text-white">PDF</strong>, pronto para colocar no LinkedIn.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-8">
-                    {['PNG', 'PDF', 'Gerado na hora', 'Sem cadastro'].map(tag => (
-                      <span
-                        key={tag}
-                        className="text-xs font-medium px-3 py-1.5 rounded-full"
-                        style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)', backgroundColor: 'rgba(255,255,255,0.03)' }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    onClick={startQuiz}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all"
-                    style={{
-                      backgroundColor: 'var(--ds-purple)',
-                      color: '#fff',
-                      boxShadow: '0 8px 32px rgba(114,26,231,0.35)',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.9' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
-                  >
-                    Quero meu certificado →
-                  </button>
-                </div>
-                {/* Certificate image */}
-                <div
-                  className="flex-1 rounded-xl overflow-hidden w-full"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-                  }}
-                >
-                  <Image
-                    src="/certificate-template.svg"
-                    alt="Preview do certificado"
-                    width={800}
-                    height={565}
-                    className="w-full"
-                    unoptimized
-                  />
-                </div>
               </div>
             </div>
           </section>
